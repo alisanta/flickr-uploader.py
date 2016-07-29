@@ -31,10 +31,10 @@
 
    *** August 2013, by alisanta
     took code from Barry Dobyns (https://github.com/bdobyns/uploadr.py) to make more arguments available in command line
-    add argument to allow upload of resized images 
+    add argument to allow upload of resized images
 
     include a repo from Ben Leslei (https://github.com/bennoleslie/pexif) to copy EXIF information to resized image
-   *** 
+   ***
 """
 
 import argparse
@@ -325,7 +325,7 @@ class Uploadr:
             self.listPhotoset()
             return
 
-        
+
         newImages = self.grabNewImages()
         if ( not self.checkToken() ):
             self.authenticate()
@@ -338,9 +338,9 @@ class Uploadr:
             picid = self.uploadImage( image )
 
             # add photo to set
-            
+
             if (options.sets!=""):
-                if setId=="": 
+                if setId=="":
                     setId = self.createSet( picid )
                 else:
                     self.addPhotoToSet( setId, picid )
@@ -349,7 +349,7 @@ class Uploadr:
             #    if (setId==""):
             #        # set not found, create new set
             #        self.addPhotoToSet( setId, picid )
-            #    self.addPhotoToSet( setId, picid )    
+            #    self.addPhotoToSet( setId, picid )
             #"""
 
             if options.drip_feed and success and i != len( newImages )-1:
@@ -381,16 +381,18 @@ class Uploadr:
         if ( not self.uploaded.has_key( image ) ):
             sys.stdout.write("Uploading " + image + "... ")
             try:
-                if hasattr(options, 'image_pixel_size'):
+                if FLICKR["image_pixel_size"]!="":
                     resized_image = self.resize_image(image)
+                else:
+                    resized_image = ""
 
                 if resized_image=="":
                     photo = ('photo', image, open(image,'rb').read())
                 else:
                     photo = ('photo', image, open(resized_image,'rb').read())
-                    
-                
-                
+
+
+
                 #if args.title: # Replace
                 #    FLICKR["title"] = args.title
                 #if args.description: # Replace
@@ -418,7 +420,7 @@ class Uploadr:
                     self.logUpload( res.photoid, image )
                     success = res.photoid
                     if len(FLICKR["lat"]) and len(FLICKR["lon"]):
-                        d = { 
+                        d = {
                             api.token : str(self.token),
                             "method" : str("flickr.photos.geo.setLocation"),
                             "photo_id" : str(res.photoid),
@@ -427,7 +429,7 @@ class Uploadr:
                             }
                         sig = self.signCall( d )
                         d[ api.sig ] = sig
-                        d[ api.key ] = FLICKR[ api.key ]         
+                        d[ api.key ] = FLICKR[ api.key ]
                         url = self.build_request(api.rest, d, () )
                         xml = urllib2.urlopen( url ).read()
                         res = xmltramp.parse(xml)
@@ -454,7 +456,7 @@ class Uploadr:
 
     def createSet( self, photoid ):
             sys.stdout.write( "Creating set "+ SET_TITLE + "... using photoid "+ str(photoid))
-            d = { 
+            d = {
                 api.method : "flickr.photosets.create",
                 api.token   : str(self.token),
                 api.perms : "write",
@@ -463,11 +465,11 @@ class Uploadr:
             }
             sig = self.signCall( d )
             d[ api.sig ] = sig
-            d[ api.key ] = FLICKR[ api.key ]        
+            d[ api.key ] = FLICKR[ api.key ]
             url = self.urlGen( api.rest, d, sig )
             try:
                 res = self.getResponse( url )
-                
+
                 if ( self.isGood( res ) ):
                     print "successful."
                     return res.photoset("id")
@@ -477,15 +479,15 @@ class Uploadr:
                 print str( sys.exc_info() )
 
     def findPhotoset ( self, setname):
-        """ retrieve all photosets from flickr, and find setID 
+        """ retrieve all photosets from flickr, and find setID
         """
-        d = { 
+        d = {
             api.method : "flickr.photosets.getList",
             api.token   : str(self.token)
         }
         sig = self.signCall( d )
         d[ api.sig ] = sig
-        d[ api.key ] = FLICKR[ api.key ]        
+        d[ api.key ] = FLICKR[ api.key ]
         url = self.urlGen( api.rest, d, sig )
         result = ""
         try:
@@ -507,35 +509,35 @@ class Uploadr:
     def listPhotoset ( self):
         """ retrieve all photosets from flickr, print as output
         """
-        d = { 
+        d = {
             api.method : "flickr.photosets.getList",
             api.token   : str(self.token)
         }
         sig = self.signCall( d )
         d[ api.sig ] = sig
-        d[ api.key ] = FLICKR[ api.key ]        
+        d[ api.key ] = FLICKR[ api.key ]
         url = self.urlGen( api.rest, d, sig )
-        
+
         try:
             res = self.getResponse( url )
             allsets=[]
             for the_set in res[0]:
                 dic=( str(the_set.title),str(the_set('id')), str(the_set('date_create')))
                 allsets.append(dic)
-                
-            a = sorted(allsets, key=lambda a_entry: a_entry[0]) 
+
+            a = sorted(allsets, key=lambda a_entry: a_entry[0])
             for x in a:
                 print (x[0] +" - "+ x[1])
 
         except:
             print str( sys.exc_info() )
 
-       
+
 
     def addPhotoToSet( self, setid, photoid ):
         # from https://github.com/stinju/uploadr.py/
-        
-        d = { 
+
+        d = {
             api.method : "flickr.photosets.addPhoto",
             api.token   : str(self.token),
             "photoset_id"      : str(setid),
@@ -543,12 +545,12 @@ class Uploadr:
         }
         sig = self.signCall( d )
         d[ api.sig ] = sig
-        d[ api.key ] = FLICKR[ api.key ]        
+        d[ api.key ] = FLICKR[ api.key ]
         url = self.urlGen( api.rest, d, sig )
         try:
             res = self.getResponse( url )
 
-            
+
             if ( self.isGood( res ) ):
                 #print "successful add to set."
                 pass
@@ -583,12 +585,12 @@ class Uploadr:
                 ratio=float(img.size[1])/float(img.size[0])
                 hsize=int(float(options.image_pixel_size))
                 vsize=int(float(options.image_pixel_size)/float(ratio))
-        
+
         if cancel==0:
             img2 = img.resize((vsize,hsize), Image.ANTIALIAS)
-            resized = os.path.normpath(  tempfile.gettempdir() +"/tmpres"+(os.path.split(image))[1] ) 
+            resized = os.path.normpath(  tempfile.gettempdir() +"/tmpres"+(os.path.split(image))[1] )
             img2.save(resized, quality=95)
-            
+
             # now copy EXIF information
             self.copy_exif(image, resized)
 
@@ -599,7 +601,7 @@ class Uploadr:
         return resized
 
     def copy_exif (self, sourcefile, targetfile):
-        """ copy important EXIF to resized file. 
+        """ copy important EXIF to resized file.
             Refer to pexif code for acceptable tags.
             For my own purpose, I just need some tags copied: Camera, Model, Original Date, and GPS if available
         """
@@ -610,17 +612,17 @@ class Uploadr:
         q=p.ExtendedEXIF
         img_dst = pexif.JpegFile.fromFile(targetfile)
         primary_dst = img_dst.exif.primary
-        
+
         # copy primary tags
         for x in a:
             if hasattr(p, x):
                 primary_dst[x]=p[x]
-        
+
         # extended EXIF tags
         for x in b:
             if hasattr(q, x):
                 primary_dst.ExtendedEXIF[x] = q[x]
-        
+
         # GPS Info
         try:
             gps_loc = img.get_geo()
@@ -633,7 +635,7 @@ class Uploadr:
             img_dst.writeFile(targetfile)
         except:
             print ("Unable to write file "+targetfile)
-        
+
 
     def kill_resize_image(self, resized_image):
         """ remove temporary resized image after upload
@@ -767,10 +769,10 @@ if __name__ == "__main__":
     parser.add_option("-x", "--lon", action="store", dest="lat", default="", help="latitude geo-location")
     parser.add_option("-y", "--lat", action="store", dest="lon", default="", help="longitude geo-location")
     parser.add_option("-r", "--drip-feed", action='store_true', default="", help='Wait a bit between uploading individual images')
-    parser.add_option("-p", "--pixel", action="store", type="string", dest="image_pixel_size", help="Uploaded image pixel size (800,1280,1600,2048)")
+    parser.add_option("-p", "--image_pixel_size", action="store", type="string", dest="image_pixel_size", default="", help="Uploaded image pixel size (800,1280,1600,2048)")
     parser.add_option("-s", "--sets", action="store", type="string", dest="sets", default="", help="Create set and ddd photo to specified set title")
     parser.add_option("-l", "--listset", action="store_true", default="", help="Print List of Photoset, ** No Upload process **")
-    
+
     #parser.add_option("-o", "--setdirname", action='store_true', default="", help='Use directory name as Set name')
 
     (options,args) = parser.parse_args()
@@ -788,14 +790,16 @@ if __name__ == "__main__":
     if hasattr(options, 'notpublic'):
         FLICKR["is_public"] = options.public
     if hasattr(options, 'friend'):
-        FLICKR["is_friend"] = options.friends    
+        FLICKR["is_friend"] = options.friends
     if hasattr(options, 'family'):
         print (options.family)
         FLICKR["is_family"] = options.family
+    if hasattr(options, 'image_pixel_size'):
+        FLICKR["image_pixel_size"] = options.image_pixel_size
     if hasattr(options, 'sets'):
         if options.sets!="":
             SET_TITLE = options.sets
-       
+
 
 
     flick = Uploadr()
@@ -803,11 +807,8 @@ if __name__ == "__main__":
     if len(args):
         IMAGE_DIR = args[0];
 
-
-
-    print "Image folder set to "+IMAGE_DIR   
+    print "Image folder set to "+IMAGE_DIR
     if ( options.daemon == True ) :
         flick.run()
     else:
         flick.upload()
-    
